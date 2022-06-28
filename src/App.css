@@ -258,7 +258,24 @@ button.single{
 }
 
 .link{
+  margin: 10px;
+  border: 1px solid #5d0cff;
+  width: 140px;
+  height: 40px;
+  /* display: inline-block; */
+  text-decoration: none;
+  color: #e2e2e2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 5px;
+}
 
+.app-footer{
+  display: flex;
+  flex-direction: row;
+  justify-self: flex-end;
+  /* justify-content: space-evenly; */
 }
 
 .mtop-100{
@@ -271,4 +288,8 @@ button.single{
 
 .m-20{
   margin: 20px;
+}
+
+.hidden{
+  visibility: hidden;
 }

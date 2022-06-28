@@ -1,8 +1,7 @@
 import { createClient, Status } from '@functionland/fula'
 import React, { useState } from 'react'
 
-const Boxes = ({ fulaClient, setFulaClient, connectionStatus, setConnectionStatus }) => {
-    const [boxAddress, setBoxAddress] = useState(null)
+const Boxes = ({ fulaClient, setFulaClient, connectionStatus, setConnectionStatus, boxAddress, setBoxAddress }) => {
     const [isPrivate, setIsPrivate] = useState(false)
     const [netSecret, setNetSecret] = useState(null)
 
