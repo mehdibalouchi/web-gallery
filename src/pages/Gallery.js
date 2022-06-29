@@ -12,9 +12,9 @@ const Gallery = ({ fulaClient, DID }) => {
         const allData = await fulaClient.graphql(readQuery);
         if (allData && allData.data && allData.data.read) {
           setPhotos([]);
-          for (const {cid, jwe} of allData.data.read) {
+          for (const {cid, jwe, ownerId} of allData.data.read) {
             let file = null
-            console.log({cid, jwe})
+            console.log({cid, jwe, ownerId})
             if (jwe) {
               console.log("encrypted photo")
               const tagged = new TaggedEncryption(DID.did)
@@ -26,15 +26,18 @@ const Gallery = ({ fulaClient, DID }) => {
                 console.log(e)
                 continue
               }
+              console.log({plainObject})
               const _iv = []
-              for (let i=0; i<16; i+=1)
-                _iv.push(plainObject.symetricKey.iv[i])
+              // for (let i=0; i<16; i+=1)
+              //   _iv.push(plainObject.symetricKey.iv[i])
 
-              const _symKey = []
-              for (let i=0; i<32; i+=1)
-                _symKey.push(plainObject.symetricKey.symKey[i])
+              // const _symKey = []
+              // for (let i=0; i<32; i+=1)
+              //   _symKey.push(plainObject.symetricKey.symKey[i])
 
-              file = await fulaClient.receiveDecryptedFile(cid, Uint8Array.from(_symKey), Uint8Array.from(_iv))
+              // file = await fulaClient.receiveDecryptedFile(cid, Uint8Array.from(_symKey), Uint8Array.from(_iv))
+              const te = new TextEncoder()
+              file = await fulaClient.receiveDecryptedFile(plainObject.CID, Uint8Array.from(te.encode(plainObject.symetricKey.key)), Uint8Array.from(te.encode(plainObject.symetricKey.iv)))
             } else {
               console.log("not encrypted photo")
               file = await fulaClient.receiveFile(cid);
@@ -99,13 +102,14 @@ export default Gallery
 export const readQuery = `
   query {
     read(input:{
-      collection:"gallery",
+      collection:"assetsMetas",
       filter:{}
     }){
       cid,
       symKey,
       iv,
-      jwe
+      jwe,
+      ownerId
     }
 
   }
