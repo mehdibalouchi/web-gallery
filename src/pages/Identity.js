@@ -38,7 +38,7 @@ const Identity = ({setDID, DID}) => {
     
     try {
       const DID = new FulaDID();
-      didObj = await DID.create(signature, truncateAddress(account))
+      didObj = await DID.create(signature, signature)
       
       setDID(DID)
     } catch (error) {
@@ -51,7 +51,7 @@ const Identity = ({setDID, DID}) => {
     try {
       const signature = await library.provider.request({
         method: "personal_sign",
-        params: [truncateAddress(account), account]
+        params: [Array.from(new TextEncoder().encode(account.toLowerCase())), account]
       });
       setSignature(signature);
     } catch (error) {
@@ -79,7 +79,7 @@ const Identity = ({setDID, DID}) => {
     if(DID) return
 
     createDID()
-  },[signature, account])
+  },[signature])
 
   return (
     <div className='container flex-column'>

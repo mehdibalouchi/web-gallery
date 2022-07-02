@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import Photo from '../components/Photo'
-import {TaggedEncryption} from '@functionland/fula-sec';
+import { TaggedEncryption } from '@functionland/fula-sec';
 import { Uploader } from '../components/Uploader';
+import { Buffer } from 'buffer'
 
 const Gallery = ({ fulaClient, DID }) => {
   const [photos, setPhotos] = useState([])
@@ -12,11 +13,10 @@ const Gallery = ({ fulaClient, DID }) => {
         const allData = await fulaClient.graphql(readQuery);
         if (allData && allData.data && allData.data.read) {
           setPhotos([]);
-          for (const {cid, jwe} of allData.data.read) {
+          for (const { cid, jwe, ownerId } of allData.data.read) {
             let file = null
-            console.log({cid, jwe})
+            console.log({ cid, jwe, ownerId })
             if (jwe) {
-              console.log("encrypted photo")
               const tagged = new TaggedEncryption(DID.did)
 
               let plainObject
@@ -26,20 +26,15 @@ const Gallery = ({ fulaClient, DID }) => {
                 console.log(e)
                 continue
               }
-              const _iv = []
-              for (let i=0; i<16; i+=1)
-                _iv.push(plainObject.symetricKey.iv[i])
-
-              const _symKey = []
-              for (let i=0; i<32; i+=1)
-                _symKey.push(plainObject.symetricKey.symKey[i])
-
-              file = await fulaClient.receiveDecryptedFile(cid, Uint8Array.from(_symKey), Uint8Array.from(_iv))
+              file = await fulaClient.receiveDecryptedFile(
+                plainObject.CID,
+                Buffer.from(plainObject.symetricKey.key, 'base64'),
+                Buffer.from(plainObject.symetricKey.iv, 'base64')
+              )
             } else {
-              console.log("not encrypted photo")
               file = await fulaClient.receiveFile(cid);
             }
-            if(file)
+            if (file)
               setPhotos((prev) => [...prev, file]);
           }
         } else {
@@ -53,7 +48,7 @@ const Gallery = ({ fulaClient, DID }) => {
     try {
       // const cid = await fula.sendFile(selectedFile);
       // await fula.graphql(createMutation, { values: [{ cid, _id: cid }] });
-      const {cid, key} = await fulaClient.sendEncryptedFile(selectedFile)
+      const { cid, key } = await fulaClient.sendEncryptedFile(selectedFile)
       const tagged = new TaggedEncryption(DID.did)
 
       let plaintext = {
@@ -61,7 +56,7 @@ const Gallery = ({ fulaClient, DID }) => {
         CID: cid
       }
       let jwe = await tagged.encrypt(plaintext.symmetricKey, plaintext.CID, [DID.did.id])
-      await fulaClient.graphql(createMutation, {values: [{cid, _id: cid, jwe}]})
+      await fulaClient.graphql(createMutation, { values: [{ cid, _id: cid, jwe }] })
       setPhotos((prev) => [selectedFile, ...prev]);
     } catch (e) {
       console.log(e.message);
@@ -99,13 +94,14 @@ export default Gallery
 export const readQuery = `
   query {
     read(input:{
-      collection:"gallery",
+      collection:"assetsMetas",
       filter:{}
     }){
       cid,
       symKey,
       iv,
-      jwe
+      jwe,
+      ownerId
     }
 
   }
